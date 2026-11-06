@@ -2,3 +2,10 @@
     padding: 0;
     margin: 0;
 }
+
+.liquid-glass-fx {
+    -webkit-backdrop-filter: blur(7px) saturate(150%);
+    backdrop-filter: blur(7px) saturate(150%);
+    background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
