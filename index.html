@@ -1,12 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emotional</title>
+    <title>Emotional Intelligence</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <script src="main.js"></script>
+
+    <!-- Фоновые оверлеи для плавных цветовых переходов при наведении -->
+    <div class="bg-overlay sector-1-bg"></div>
+    <div class="bg-overlay sector-2-bg"></div>
+    <div class="bg-overlay sector-3-bg"></div>
+
+    <div class="container">
+        <!-- Шапка: заголовок темы / разделов (находится сверху по центру) -->
+        <header class="header">
+            <h1 id="main-title" class="title default">Emotional intelligence</h1>
+        </header>
+
+        <!-- Интерактивная диаграмма жидкого стекла -->
+        <main class="chart-wrapper">
+            <div class="glass-circle liquid-glass-fx">
+                <svg viewBox="0 0 400 400" class="chart-svg">
+                    <!-- Верхний правый сегмент (ЕМОЦІЇ) -->
+                    <path class="sector sector-1" data-sector="1" data-title="ЕМОЦІЇ"
+                        d="M 200,200 L 200,0 A 200,200 0 0,1 373.205,300 Z" />
+
+                    <!-- Нижний сегмент (САМОКОНТРОЛЬ) -->
+                    <path class="sector sector-2" data-sector="2" data-title="САМОКОНТРОЛЬ"
+                        d="M 200,200 L 373.205,300 A 200,200 0 0,1 26.795,300 Z" />
+
+                    <!-- Верхний левый сегмент (ЕМПАТІЯ) -->
+                    <path class="sector sector-3" data-sector="3" data-title="ЕМПАТІЯ"
+                        d="M 200,200 L 26.795,300 A 200,200 0 0,1 200,0 Z" />
+
+                    <!-- Разделительные стыковочные линии -->
+                    <line x1="200" y1="200" x2="200" y2="0" class="divider" />
+                    <line x1="200" y1="200" x2="373.205" y2="300" class="divider" />
+                    <line x1="200" y1="200" x2="26.795" y2="300" class="divider" />
+                </svg>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const body = document.body;
+            const mainTitle = document.getElementById('main-title');
+            const defaultTitle = 'Emotional intelligence';
+            const sectors = document.querySelectorAll('.sector');
+
+            sectors.forEach(sector => {
+                const sectorId = sector.getAttribute('data-sector');
+                const sectorTitle = sector.getAttribute('data-title');
+
+                // Переход при наведении
+                sector.addEventListener('mouseenter', () => {
+                    body.setAttribute('data-active-sector', sectorId);
+
+                    mainTitle.classList.add('is-hidden');
+                    setTimeout(() => {
+                        mainTitle.textContent = sectorTitle;
+                        mainTitle.classList.remove('default');
+                        mainTitle.classList.remove('is-hidden');
+                    }, 180);
+                });
+
+                // Возврат при уходе курсора
+                sector.addEventListener('mouseleave', () => {
+                    body.removeAttribute('data-active-sector');
+
+                    mainTitle.classList.add('is-hidden');
+                    setTimeout(() => {
+                        mainTitle.textContent = defaultTitle;
+                        mainTitle.classList.add('default');
+                        mainTitle.classList.remove('is-hidden');
+                    }, 180);
+                });
+
+                // Переход по клику на будущую страницу
+                sector.addEventListener('click', () => {
+                    window.location.href = 'BLANK';
+                });
+            });
+        });
+    </script>
 </body>
+
 </html>

@@ -1,13 +1,7 @@
 * {
-    padding: 0;
     margin: 0;
-}
-
-.liquid-glass-fx {
-    -webkit-backdrop-filter: blur(7px) saturate(150%);
-    backdrop-filter: blur(7px) saturate(150%);
-    background-color: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0;
+    box-sizing: border-box;
 }
 
 /** Ultra Light */
@@ -50,4 +44,153 @@
   font-family: "San Francisco";
   font-weight: 700;
   src: url("https://applesocial.s3.amazonaws.com/assets/styles/fonts/sanfrancisco/sanfranciscodisplay-bold-webfont.woff");
+}
+
+/* Настройки жидкого стекла */
+.liquid-glass-fx {
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    backdrop-filter: blur(12px) saturate(160%);
+    background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Базовый динамический градиент фона */
+body {
+    min-height: 100vh;
+    font-family: "San Francisco", -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #ffffff;
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    overflow: hidden;
+    position: relative;
+}
+
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Плавные фоновые слои для смены оттенков при наведении */
+.bg-overlay {
+    position: fixed;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Оттенки для секции 1 (ЕМОЦІЇ) */
+.sector-1-bg {
+    background-image: linear-gradient(-45deg, #2b580c, #639a67, #23a6d5, #1e5f74);
+}
+
+/* Оттенки для секции 2 (САМОКОНТРОЛЬ) */
+.sector-2-bg {
+    background-image: linear-gradient(-45deg, #d9455f, #f28b50, #e73c7e, #f7b731);
+}
+
+/* Оттенки для секции 3 (ЕМПАТІЯ) */
+.sector-3-bg {
+    background-image: linear-gradient(-45deg, #6a0572, #ab83a1, #3b6978, #88304e);
+}
+
+body[data-active-sector="1"] .sector-1-bg { opacity: 1; }
+body[data-active-sector="2"] .sector-2-bg { opacity: 1; }
+body[data-active-sector="3"] .sector-3-bg { opacity: 1; }
+
+/* Основная сетка */
+.container {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px;
+}
+
+/* Шапка с главным названием */
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title {
+    font-size: 2.2rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: opacity 0.2s ease, transform 0.2s ease, font-size 0.3s ease;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Крупный размер для Emotional intelligence */
+.title.default {
+    font-size: 3.2rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+}
+
+.title.is-hidden {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+/* Центрирование диаграммы */
+.chart-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.glass-circle {
+    width: 440px;
+    height: 440px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Стили секций диаграммы */
+.sector {
+    cursor: pointer;
+    transition: fill-opacity 0.4s ease, opacity 0.4s ease;
+    fill-opacity: 0.25;
+}
+
+.sector-1 { fill: #88a0e0; }
+.sector-2 { fill: #f0a070; }
+.sector-3 { fill: #b880d0; }
+
+/* Тонкие линии-разделители */
+.divider {
+    stroke: rgba(255, 255, 255, 0.35);
+    stroke-width: 1.5;
+}
+
+/* Полупрозрачность при наведении */
+.chart-svg:hover .sector {
+    fill-opacity: 0.15;
+}
+
+.chart-svg .sector:hover {
+    fill-opacity: 0.65;
 }
