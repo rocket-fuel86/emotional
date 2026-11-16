@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Scrub Template</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+    }
+
+    
+    #video {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 100vw; min-height: 100vh;
+      width: auto; height: auto;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ═══ Контейнер текста поверх видео ═══ */
+    .content {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ═══ Секция = один экран ═══ */
+    .section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    /* ═══ Появление текста при скролле ═══ */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .fade-in.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Типографика (делайте под себя) */
+    h1 {
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      max-width: 800px;
+    }
+
+    h2 {
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      max-width: 700px;
+    }
+
+    p {
+      margin-top: 1rem;
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: rgba(255,255,255,0.6);
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.8rem 2rem;
+      border-radius: 8px;
+      background: #fff;
+      color: #000;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+    .btn:hover { opacity: 0.8; }
+
+    /* ═══ Прогресс-бар внизу (показывает позицию видео) ═══ */
+    #progress {
+      position: fixed;
+      bottom: 0; left: 0;
+      height: 3px;
+      background: #fff;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+  <!--  ВИДЕО: Матвей Влад тут свое видео вставляйте -->
+  <video id="video" src="videos/emotions.mp4" muted playsinline preload="auto"></video>
+
+  <div class="overlay"></div>
+  <div id="progress"></div>
+
+  <!--   СЕКЦИИ: добавляй / удаляй / меняй текст  -->
+  <div class="content">
+
+    <!-- Секция 1 -->
+    <div class="section">
+      <h1 class="fade-in">Заголовок первого экрана</h1>
+      <p class="fade-in">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      <a href="#" class="btn fade-in">Кнопка</a>
+    </div>
+
+    <!-- Секция 2 -->
+    <div class="section">
+      <h2 class="fade-in">Заголовок второго экрана</h2>
+      <p class="fade-in">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+    </div>
+
+    <!-- Секция 3 -->
+    <div class="section">
+      <h2 class="fade-in">Заголовок третьего экрана</h2>
+      <p class="fade-in">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+    </div>
+
+    <!-- Секция 4 -->
+    <div class="section">
+      <h2 class="fade-in">Заголовок четвёртого экрана</h2>
+      <p class="fade-in">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
+      <a href="#" class="btn fade-in">Ещё кнопка</a>
+    </div>
+
+    <!-- Секция 5 -->
+    <div class="section">
+      <h2 class="fade-in">Последний экран</h2>
+      <p class="fade-in">Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>
+    </div>
+
+  </div>
+  <script>
+    const video    = document.getElementById('video');
+    const progress = document.getElementById('progress');
+
+    // Ждём загрузки метаданных видео, потом разрешаем скрабб
+    let videoReady = false;
+
+    video.addEventListener('loadedmetadata', () => {
+      videoReady = true;
+      // Сразу устанавливаем начальную позицию
+      handleScrub();
+    });
+
+    // Принудительно начинаем загрузку
+    video.load();
+
+    function handleScrub() {
+      const scrollMax = document.body.scrollHeight - window.innerHeight;
+      if (scrollMax <= 0) return;
+
+      const t = window.scrollY / scrollMax;
+
+      if (videoReady && video.duration) {
+        video.currentTime = t * video.duration;
+      }
+
+      progress.style.width = (t * 100) + '%';
+    }
+
+    // Скролл → позиция видео
+    window.addEventListener('scroll', handleScrub);
+
+    // Появление текста
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) e.target.classList.add('show');
+      });
+    }, { threshold: 0.2 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
