@@ -1,199 +1,366 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Scrub Template</title>
+  <title>Sticky Video Scrub</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       background: #000;
       color: #fff;
-      font-family: system-ui, sans-serif;
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
     }
 
-    
-    #video {
+    /* ═══ 1. Экран загрузки ═══ */
+    #loader {
       position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      min-width: 100vw; min-height: 100vh;
-      width: auto; height: auto;
-      object-fit: cover;
-      z-index: 0;
+      inset: 0;
+      background: #000;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .loader-text {
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
     }
 
-    
-    .overlay {
-      position: fixed; inset: 0;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    /* ═══ Контейнер текста поверх видео ═══ */
-    .content {
+    /* ═══ 2. Линейка скролла и липкий экран ═══ */
+    .scroll-track {
+      height: 500vh; /* Длина прокрутки = 5 экранов */
       position: relative;
-      z-index: 2;
     }
 
-    /* ═══ Секция = один экран ═══ */
-    .section {
-      min-height: 100vh;
+    .sticky-viewport {
+      position: sticky;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Видео заполняет весь экран без чёрных полос */
+    }
+
+    /* ═══ 3. Текст поверх видео ═══ */
+    .story-step {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 3rem 2rem;
+      text-align: center;
+      padding: 2rem;
+
+      /* По умолчанию текст скрыт и чуть опущен вниз */
+      opacity: 0;
+      transform: translateY(30px);
+      pointer-events: none;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    /* Когда JS добавляет класс .active — текст плавно выезжает */
+    .story-step.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* ═══ 4. Чёрные блоки после видео ═══ */
+    .info-section {
+      background: #000;
+      padding: 8rem 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 4rem;
+    }
+
+    .info-card {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .info-card h3 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .text-banner {
+      background: #000;
+      padding: 8rem 2rem;
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ═══ 5. Футер ═══ */
+    footer {
+      background: #000;
+      padding: 5rem 2rem 3rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
       text-align: center;
     }
 
-    /* ═══ Появление текста при скролле ═══ */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(50px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
-    }
-    .fade-in.show {
-      opacity: 1;
-      transform: translateY(0);
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
     }
 
-    /* Типографика (делайте под себя) */
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+    }
+    .footer-links a:hover {
+      color: #fff;
+    }
+
+    .copyright {
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 0.85rem;
+    }
+
+    /* ═══ Типографика и кнопки ═══ */
     h1 {
-      font-size: clamp(2.5rem, 7vw, 5rem);
-      font-weight: 800;
-      line-height: 1.1;
-      max-width: 800px;
+      font-size: clamp(2.8rem, 7vw, 6rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 0.95;
+      max-width: 900px;
+      text-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
     }
 
     h2 {
-      font-size: clamp(1.8rem, 5vw, 3.5rem);
-      font-weight: 700;
-      line-height: 1.15;
-      max-width: 700px;
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 1.05;
+      max-width: 800px;
+      text-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
     }
 
     p {
-      margin-top: 1rem;
-      font-size: clamp(1rem, 2vw, 1.2rem);
-      color: rgba(255,255,255,0.6);
-      max-width: 520px;
-      line-height: 1.7;
+      margin-top: 1.2rem;
+      font-size: clamp(1rem, 1.8vw, 1.25rem);
+      color: rgba(255, 255, 255, 0.8);
+      max-width: 600px;
+      line-height: 1.6;
     }
 
     .btn {
       display: inline-block;
       margin-top: 2rem;
-      padding: 0.8rem 2rem;
-      border-radius: 8px;
+      padding: 1rem 2.5rem;
+      border-radius: 4px;
       background: #fff;
       color: #000;
-      font-weight: 600;
-      font-size: 1rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
       text-decoration: none;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.3s;
+      transition: transform 0.2s ease, background 0.2s ease;
     }
-    .btn:hover { opacity: 0.8; }
+    .btn:hover {
+      transform: scale(1.05);
+      background: #e5e5e5;
+    }
 
-    /* ═══ Прогресс-бар внизу (показывает позицию видео) ═══ */
+    /* Полоска прогресса внизу экрана */
     #progress {
       position: fixed;
-      bottom: 0; left: 0;
+      bottom: 0;
+      left: 0;
       height: 3px;
+      width: 0%;
       background: #fff;
-      z-index: 10;
+      z-index: 20;
     }
   </style>
 </head>
 <body>
 
-  <!--  ВИДЕО: Матвей Влад тут свое видео вставляйте -->
-  <video id="video" src="videos/emotions.mp4" muted playsinline preload="auto"></video>
+  <!-- Экран загрузки -->
+  <div id="loader">
+    <div class="loader-text" id="loader-status">Загрузка сцены...</div>
+  </div>
 
-  <div class="overlay"></div>
+  <!-- Полоска прогресса -->
   <div id="progress"></div>
 
-  <!--   СЕКЦИИ: добавляй / удаляй / меняй текст  -->
-  <div class="content">
+  <!-- Блок с видео -->
+  <section class="scroll-track" id="video-track">
+    <div class="sticky-viewport">
+      <video id="video" src="videos/emotions.mp4" muted playsinline preload="auto"></video>
+      
+      <!-- Тексты появляются в заданных интервалах от 0.0 до 1.0 -->
+      <div class="story-step" data-start="0.00" data-end="0.30">
+        <h1>Начало истории</h1>
+        <p>Видео приклеено к экрану и проигрывается целиком при прокрутке этого блока.</p>
+      </div>
 
-    <!-- Секция 1 -->
-    <div class="section">
-      <h1 class="fade-in">Заголовок первого экрана</h1>
-      <p class="fade-in">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-      <a href="#" class="btn fade-in">Кнопка</a>
+      <div class="story-step" data-start="0.35" data-end="0.65">
+        <h2>Развитие сюжета</h2>
+        <p>Середина ролика — сменяются текстовые акценты поверх плавной сцены.</p>
+      </div>
+
+      <div class="story-step" data-start="0.70" data-end="1.00">
+        <h2>Финал видео</h2>
+        <p>После завершения ролика оно уедет вверх, уступая место чёрным секциям с информацией.</p>
+      </div>
     </div>
+  </section>
 
-    <!-- Секция 2 -->
-    <div class="section">
-      <h2 class="fade-in">Заголовок второго экрана</h2>
-      <p class="fade-in">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+  <!-- Блок с карточками -->
+  <section class="info-section">
+    <div class="container">
+      <h2>Подробности и детали</h2>
+      <p>Видео закончилось и уехало вверх. Дальше идёт чистый чёрный фон с текстовыми блоками.</p>
+      
+      <div class="info-grid">
+        <div class="info-card">
+          <h3>01. Атмосфера</h3>
+          <p>Описание первой ключевой особенности проекта, продукта или концепции.</p>
+        </div>
+        <div class="info-card">
+          <h3>02. Динамика</h3>
+          <p>Второй важный тезис. Сюда можно добавить любую верстку, карточки или галерею.</p>
+        </div>
+        <div class="info-card">
+          <h3>03. Технологии</h3>
+          <p>Третий блок с информацией о деталях реализации.</p>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <!-- Секция 3 -->
-    <div class="section">
-      <h2 class="fade-in">Заголовок третьего экрана</h2>
-      <p class="fade-in">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+  <!-- Баннер перед футером -->
+  <section class="text-banner">
+    <h2>Готовы начать?</h2>
+    <p>Ещё один минималистичный текстовый акцент на чёрном фоне перед подвалом сайта.</p>
+    <a href="#" class="btn">Перейти к заказу</a>
+  </section>
+
+  <!-- Футер -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="#">О проекте</a>
+        <a href="#">Галерея</a>
+        <a href="#">Контакты</a>
+        <a href="#">Политика конфиденциальности</a>
+      </div>
+      <div class="copyright">© 2026 Все права защищены.</div>
     </div>
+  </footer>
 
-    <!-- Секция 4 -->
-    <div class="section">
-      <h2 class="fade-in">Заголовок четвёртого экрана</h2>
-      <p class="fade-in">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
-      <a href="#" class="btn fade-in">Ещё кнопка</a>
-    </div>
-
-    <!-- Секция 5 -->
-    <div class="section">
-      <h2 class="fade-in">Последний экран</h2>
-      <p class="fade-in">Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>
-    </div>
-
-  </div>
   <script>
-    const video    = document.getElementById('video');
-    const progress = document.getElementById('progress');
+    // Находим нужные элементы на странице
+    const video = document.getElementById('video');
+    const loader = document.getElementById('loader');
+    const loaderStatus = document.getElementById('loader-status');
+    const progressEl = document.getElementById('progress');
+    const track = document.getElementById('video-track');
+    const steps = document.querySelectorAll('.story-step');
 
-    // Ждём загрузки метаданных видео, потом разрешаем скрабб
-    let videoReady = false;
+    let isVideoReady = false;
+    let targetProgress = 0;  // Где находится скролл (цель от 0 до 1)
+    let currentProgress = 0; // Где находится видео сейчас (плавно догоняет цель)
 
-    video.addEventListener('loadedmetadata', () => {
-      videoReady = true;
-      // Сразу устанавливаем начальную позицию
-      handleScrub();
-    });
-
-    // Принудительно начинаем загрузку
-    video.load();
-
-    function handleScrub() {
-      const scrollMax = document.body.scrollHeight - window.innerHeight;
-      if (scrollMax <= 0) return;
-
-      const t = window.scrollY / scrollMax;
-
-      if (videoReady && video.duration) {
-        video.currentTime = t * video.duration;
-      }
-
-      progress.style.width = (t * 100) + '%';
+    // 1. Убираем экран загрузки, когда видео готово
+    function onVideoReady() {
+      isVideoReady = true;
+      loader.classList.add('hidden');
+      video.currentTime = 0.01; // Показываем самый первый кадр
     }
 
-    // Скролл → позиция видео
-    window.addEventListener('scroll', handleScrub);
+    video.addEventListener('loadeddata', onVideoReady, { once: true });
+    video.addEventListener('error', () => {
+      loaderStatus.textContent = 'Ошибка: файл videos/emotions.mp4 не найден';
+      loaderStatus.style.color = '#ff5555';
+    });
 
-    // Появление текста
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) e.target.classList.add('show');
+    if (video.readyState >= 2) onVideoReady();
+
+    // 2. Считаем прогресс скролла (число от 0 до 1)
+    function updateScroll() {
+      const rect = track.getBoundingClientRect();
+      const maxScroll = track.offsetHeight - window.innerHeight;
+      
+      // Переводим пиксели в диапазон 0..1
+      const rawProgress = -rect.top / maxScroll;
+      targetProgress = Math.max(0, Math.min(1, rawProgress));
+    }
+
+    window.addEventListener('scroll', updateScroll, { passive: true });
+    window.addEventListener('resize', updateScroll);
+
+    // 3. Главный цикл анимации (работает 60+ раз в секунду)
+    function animate() {
+      // Плавная инерция: currentProgress постепенно приближается к targetProgress
+      currentProgress += (targetProgress - currentProgress) * 0.08;
+
+      // Двигаем белую полоску прогресса внизу
+      progressEl.style.width = (currentProgress * 100) + '%';
+
+      // Показываем или скрываем нужный текст
+      steps.forEach(step => {
+        const start = Number(step.dataset.start);
+        const end = Number(step.dataset.end);
+        const isVisible = currentProgress >= start && currentProgress <= end;
+        
+        step.classList.toggle('active', isVisible);
       });
-    }, { threshold: 0.2 });
 
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+      // Перематываем видео на нужную секунду
+      if (isVideoReady && video.duration && !video.seeking) {
+        const targetTime = currentProgress * video.duration;
+        if (Math.abs(video.currentTime - targetTime) > 0.01) {
+          video.currentTime = targetTime;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Запускаем расчёты и цикл анимации
+    updateScroll();
+    animate();
   </script>
-
 </body>
 </html>
