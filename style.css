@@ -208,7 +208,6 @@ body[data-active-sector="3"] .sector-3-bg { opacity: 1; }
     border-radius: 50%;
     cursor: pointer;
 
-    /* Убираем фон и рамку с самого контейнера, чтобы не дублировать ::before */
     background-color: transparent;
     border-color: transparent;
     -webkit-backdrop-filter: none;
