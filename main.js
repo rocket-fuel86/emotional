@@ -1,11 +1,24 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     const body = document.body;
     const mainTitle = document.getElementById('main-title');
     const sectors = document.querySelectorAll('.sector');
+    const langBtn = document.getElementById('lang-btn');
 
-    const defaultTitle = 'Emotional intelligence';
+    const translations = {
+        uk: {
+            default: 'Емоційний інтелект',
+            sectors: { '1': 'ЕМОЦІЇ', '2': 'САМОКОНТРОЛЬ', '3': 'ЕМПАТІЯ' },
+            btnLabel: 'EN'
+        },
+        en: {
+            default: 'Emotional intelligence',
+            sectors: { '1': 'EMOTIONS', '2': 'SELF-CONTROL', '3': 'EMPATHY' },
+            btnLabel: 'UA'
+        }
+    };
 
+    let currentLang = 'uk';
+    let activeSector = null;
     let animationTimeout;
 
     function updateTitle(title, isDefault = false) {
@@ -21,26 +34,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 180);
     }
 
-    function activateSector(sector) {
-        const sectorId = sector.dataset.sector;
+    function applyLanguage(lang) {
+        const dict = translations[lang];
+        document.documentElement.lang = lang;
+        langBtn.textContent = dict.btnLabel;
 
-        body.setAttribute('data-active-sector', sectorId);
-        updateTitle(sector.dataset.title);
+        sectors.forEach(sector => {
+            sector.setAttribute('aria-label', dict.sectors[sector.dataset.sector]);
+        });
+
+        if (activeSector) {
+            updateTitle(dict.sectors[activeSector]);
+        } else {
+            updateTitle(dict.default, true);
+        }
+    }
+
+    langBtn.addEventListener('click', () => {
+        currentLang = currentLang === 'uk' ? 'en' : 'uk';
+        applyLanguage(currentLang);
+    });
+
+    function activateSector(sector) {
+        activeSector = sector.dataset.sector;
+
+        body.setAttribute('data-active-sector', activeSector);
+        updateTitle(translations[currentLang].sectors[activeSector]);
     }
 
     function deactivateSector() {
+        activeSector = null;
         body.removeAttribute('data-active-sector');
-        updateTitle(defaultTitle, true);
+        updateTitle(translations[currentLang].default, true);
     }
 
     sectors.forEach(sector => {
         sector.setAttribute('tabindex', '0');
         sector.setAttribute('role', 'button');
-
-        sector.setAttribute(
-            'aria-label',
-            sector.dataset.title
-        );
 
         sector.addEventListener('mouseenter', () => {
             activateSector(sector);
@@ -69,4 +99,5 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'BLANK';
         });
     });
+    applyLanguage(currentLang);
 });
