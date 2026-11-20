@@ -3,16 +3,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainTitle = document.getElementById('main-title');
     const sectors = document.querySelectorAll('.sector');
     const langBtn = document.getElementById('lang-btn');
+    const webcamRing = document.getElementById('webcam-ring');
 
     const translations = {
         uk: {
             default: 'Емоційний інтелект',
+            webcam: 'СКАНЕР ЕМОЦІЙ',
             sectors: { '1': 'ЕМОЦІЇ', '2': 'САМОКОНТРОЛЬ', '3': 'ЕМПАТІЯ' },
+            bgWords: {
+                '1': ['Радість', 'Подив', 'Інтерес', 'Натхнення', 'Хвилювання', 'Почуття'],
+                '2': ['Баланс', 'Спокій', 'Фокус', 'Витримка', 'Усвідомленість', 'Гармонія'],
+                '3': ['Розуміння', 'Підтримка', 'Тепло', 'Довіра', 'Чутливість', 'Резонанс']
+            },
             btnLabel: 'EN'
         },
         en: {
             default: 'Emotional intelligence',
+            webcam: 'EMOTION SCANNER',
             sectors: { '1': 'EMOTIONS', '2': 'SELF-CONTROL', '3': 'EMPATHY' },
+            bgWords: {
+                '1': ['Joy', 'Wonder', 'Curiosity', 'Inspiration', 'Excitement', 'Feelings'],
+                '2': ['Balance', 'Calmness', 'Focus', 'Composure', 'Mindfulness', 'Harmony'],
+                '3': ['Understanding', 'Support', 'Warmth', 'Trust', 'Sensitivity', 'Resonance']
+            },
             btnLabel: 'UA'
         }
     };
@@ -20,6 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLang = 'uk';
     let activeSector = null;
     let animationTimeout;
+
+    function updateBackgroundWords(lang) {
+        const wordsDict = translations[lang].bgWords;
+
+        Object.keys(wordsDict).forEach(sectorId => {
+            const spans = document.querySelectorAll(`.words-sector-${sectorId} span`);
+            spans.forEach((span, index) => {
+                span.textContent = wordsDict[sectorId][index] || '';
+            });
+        });
+    }
 
     function updateTitle(title, isDefault = false) {
         clearTimeout(animationTimeout);
@@ -39,11 +63,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.lang = lang;
         langBtn.textContent = dict.btnLabel;
 
+        updateBackgroundWords(lang);
+
         sectors.forEach(sector => {
             sector.setAttribute('aria-label', dict.sectors[sector.dataset.sector]);
         });
 
         if (activeSector) {
+            updateTitle(dict.sectors[activeSector]);
+        } else {
+            updateTitle(dict.default, true);
+        }
+
+        webcamRing.setAttribute('aria-label', dict.webcam);
+
+        if (activeSector === 'webcam') {
+            updateTitle(dict.webcam);
+        } else if (activeSector) {
             updateTitle(dict.sectors[activeSector]);
         } else {
             updateTitle(dict.default, true);
@@ -67,6 +103,47 @@ document.addEventListener('DOMContentLoaded', () => {
         body.removeAttribute('data-active-sector');
         updateTitle(translations[currentLang].default, true);
     }
+
+    function activateWebcamRing() {
+        activeSector = 'webcam';
+        body.removeAttribute('data-active-sector');
+        updateTitle(translations[currentLang].webcam);
+    }
+
+    webcamRing.addEventListener('mouseover', event => {
+        if (event.target === webcamRing) {
+            activateWebcamRing();
+        }
+    });
+
+    webcamRing.addEventListener('mouseleave', () => {
+        if (activeSector === 'webcam') {
+            deactivateSector();
+        }
+    });
+
+    webcamRing.addEventListener('focus', () => {
+        activateWebcamRing();
+    });
+
+    webcamRing.addEventListener('blur', () => {
+        if (activeSector === 'webcam') {
+            deactivateSector();
+        }
+    });
+
+    webcamRing.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            webcamRing.click();
+        }
+    });
+
+    webcamRing.addEventListener('click', event => {
+        if (event.target === webcamRing) {
+            window.location.href = 'webcam.html';
+        }
+    });
 
     sectors.forEach(sector => {
         sector.setAttribute('tabindex', '0');
@@ -99,5 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'BLANK';
         });
     });
+
     applyLanguage(currentLang);
 });
