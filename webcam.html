@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Розпізнавання емоцій</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.14/dist/face-api.js"></script>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --glass-bg: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.22) 0%,
+                rgba(255, 255, 255, 0.08) 50%,
+                rgba(255, 255, 255, 0.16) 100%
+            );
+            --glass-border: rgba(255, 255, 255, 0.34);
+            --glass-shadow:
+                0 14px 36px rgba(0, 0, 0, 0.38),
+                0 2px 8px rgba(0, 0, 0, 0.22),
+                inset 0 1.5px 1px rgba(255, 255, 255, 0.62),
+                inset 0 -1.5px 2px rgba(255, 255, 255, 0.14),
+                inset 1px 0 1px rgba(255, 255, 255, 0.25);
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            background-color: #1c1c1c;
+            color: #ffffff;
+            font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            user-select: none;
+        }
+
+        .fullscreen-stage {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background-color: #1c1c1c;
+            overflow: hidden;
+        }
+
+        #video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #video.is-ready {
+            opacity: 1;
+        }
+
+        .liquid-glass {
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
+            backdrop-filter: blur(12px) saturate(160%);
+            background-color: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .liquid-glass::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(
+                145deg,
+                rgba(255, 255, 255, 0.55) 0%,
+                rgba(255, 255, 255, 0.05) 45%,
+                rgba(255, 255, 255, 0.28) 100%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .back-pill {
+            position: fixed;
+            top: 24px;
+            left: 20px;
+            z-index: 20;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border-radius: 9999px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            transition:
+                transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                background-color 0.25s ease,
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+        .back-pill:hover {
+            transform: translateY(-2px);
+            background-color: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.62);
+            box-shadow:
+                0 18px 42px rgba(0, 0, 0, 0.45),
+                0 0 22px rgba(255, 255, 255, 0.16),
+                inset 0 1.5px 1.5px rgba(255, 255, 255, 0.85),
+                inset 0 -1.5px 2px rgba(255, 255, 255, 0.22);
+        }
+
+        .back-pill:active {
+            transform: translateY(0) scale(0.96);
+        }
+
+        .back-pill svg {
+            position: relative;
+            z-index: 3;
+            width: 21px;
+            height: 21px;
+            flex-shrink: 0;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .back-pill:hover svg {
+            transform: translateX(-3px);
+        }
+
+        .back-pill-label {
+            position: relative;
+            z-index: 3;
+            display: none;
+            white-space: nowrap;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+        }
+
+        @media (min-width: 769px) {
+            .back-pill {
+                top: 28px;
+                left: 32px;
+                width: auto;
+                height: auto;
+                padding: 12px 22px;
+                gap: 10px;
+                font-size: 15.5px;
+            }
+
+            .back-pill-label {
+                display: inline;
+            }
+        }
+
+        .emotion-capsule {
+            position: fixed;
+            bottom: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            width: min(88vw, 350px);
+            padding: 16px 24px;
+            border-radius: 28px;
+            text-align: center;
+            pointer-events: none;
+            transition:
+                opacity 0.26s ease,
+                transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+                width 0.3s ease;
+        }
+
+        .emotion-capsule.is-updating {
+            opacity: 0;
+            transform: translate(-50%, 8px) scale(0.985);
+        }
+
+        .emotion-text {
+            position: relative;
+            z-index: 3;
+            display: block;
+            color: #ffffff;
+            font-family: 'Montserrat', 'Inter', sans-serif;
+            font-size: clamp(1.25rem, 2.4vw, 2.1rem);
+            font-weight: 700;
+            line-height: 1.28;
+            letter-spacing: -0.015em;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+        }
+
+        @media (min-width: 769px) {
+            .emotion-capsule {
+                bottom: 44px;
+                width: auto;
+                max-width: 92vw;
+                padding: 16px 36px;
+                border-radius: 9999px;
+            }
+
+            .emotion-text {
+                white-space: nowrap;
+                line-height: 1.22;
+            }
+        }
+
+        .permission-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 25;
+            width: min(88vw, 410px);
+            padding: 26px 28px;
+            border-radius: 28px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            transition: opacity 0.32s ease, transform 0.32s ease;
+        }
+
+        .permission-card.is-hidden {
+            opacity: 0;
+            transform: translate(-50%, -48%) scale(0.96);
+            pointer-events: none;
+        }
+
+        .permission-text {
+            position: relative;
+            z-index: 3;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.45;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+        }
+
+        .glass-action-btn {
+            position: relative;
+            z-index: 3;
+            display: none;
+            padding: 12px 26px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.42);
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow:
+                0 6px 18px rgba(0, 0, 0, 0.25),
+                inset 0 1px 1px rgba(255, 255, 255, 0.65);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition:
+                transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                background-color 0.22s ease,
+                border-color 0.22s ease,
+                box-shadow 0.22s ease;
+        }
+
+        .glass-action-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.28);
+            border-color: rgba(255, 255, 255, 0.72);
+            box-shadow:
+                0 10px 24px rgba(0, 0, 0, 0.32),
+                0 0 18px rgba(255, 255, 255, 0.18),
+                inset 0 1px 1px rgba(255, 255, 255, 0.85);
+        }
+
+        .glass-action-btn:active {
+            transform: translateY(0) scale(0.97);
+        }
+    </style>
+</head>
+<body>
+    <main class="fullscreen-stage">
+        <video id="video" autoplay muted playsinline></video>
+
+        <a href="index.html" id="backButton" class="back-pill liquid-glass" aria-label="Повернутися на головну">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span class="back-pill-label">Повернутися на головну</span>
+        </a>
+
+        <div id="permissionCard" class="permission-card liquid-glass">
+            <p id="statusText" class="permission-text">Завантаження моделі розпізнавання...</p>
+            <button id="retryCameraBtn" type="button" class="glass-action-btn">Увімкнути камеру</button>
+        </div>
+
+        <div id="emotionCapsule" class="emotion-capsule liquid-glass" aria-live="polite">
+            <span id="emotionText" class="emotion-text">Завантаження моделі розпізнавання...</span>
+        </div>
+    </main>
+
+    <script>
+        const EMOTION_PHRASES = {
+            happy: 'Ви щасливий (-а). Так тримати!',
+            neutral: 'Ви спокійний (-а) та врівноважений (-а).',
+            sad: 'Ви виглядаєте сумним (-ою). Все обов’язково налагодиться!',
+            surprised: 'Ви здивований (-а)! Щось привернуло вашу увагу?',
+            angry: 'Ви сердитий (-а). Зробіть глибокий вдих і видих.',
+            fearful: 'Ви відчуваєте тривогу. Ви в безпеці, все добре.',
+            disgusted: 'Вам щось не до вподоби. Спробуйте перемкнути увагу.'
+        };
+
+        const STATUS_MESSAGES = {
+            loadingModels: 'Завантаження моделі розпізнавання...',
+            requestingCamera: 'Надайте доступ до камери...',
+            noFace: 'Подивіться в камеру, щоб розпізнати емоцію...'
+        };
+
+        const MODEL_SOURCES = [
+            './models',
+            // 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/',
+            // 'https://justadudewhohacks.github.io/face-api.js/models'
+        ];
+
+        const videoEl = document.getElementById('video');
+        const permissionCardEl = document.getElementById('permissionCard');
+        const statusTextEl = document.getElementById('statusText');
+        const retryCameraBtn = document.getElementById('retryCameraBtn');
+        const emotionCapsuleEl = document.getElementById('emotionCapsule');
+        const emotionTextEl = document.getElementById('emotionText');
+        const backButton = document.getElementById('backButton');
+
+        const SMOOTHING_WINDOW = 6;
+        const DETECTION_INTERVAL_MS = 150;
+        const NO_FACE_TIMEOUT_MS = 1200;
+
+        let modelsReady = false;
+        let detectionTimer = null;
+        let expressionHistory = [];
+        let lastFaceTimestamp = 0;
+        let currentDisplayedText = STATUS_MESSAGES.loadingModels;
+        let textSwapTimeout = null;
+
+        function setEmotionCaption(nextText) {
+            if (currentDisplayedText === nextText) return;
+            currentDisplayedText = nextText;
+
+            if (textSwapTimeout) {
+                clearTimeout(textSwapTimeout);
+            }
+
+            emotionCapsuleEl.classList.add('is-updating');
+            textSwapTimeout = setTimeout(() => {
+                emotionTextEl.textContent = nextText;
+                emotionCapsuleEl.classList.remove('is-updating');
+            }, 150);
+        }
+
+        async function loadEmotionModels() {
+            if (typeof faceapi === 'undefined') {
+                statusTextEl.textContent = 'Не вдалося завантажити бібліотеку розпізнавання. Оновіть сторінку.';
+                return false;
+            }
+
+            for (const modelUri of MODEL_SOURCES) {
+                try {
+                    await Promise.all([
+                        faceapi.nets.tinyFaceDetector.loadFromUri(modelUri),
+                        faceapi.nets.faceExpressionNet.loadFromUri(modelUri)
+                    ]);
+                    modelsReady = true;
+                    return true;
+                } catch (err) {
+                    console.warn(`Не вдалося завантажити ваги з ${modelUri}:`, err);
+                }
+            }
+
+            statusTextEl.textContent = 'Помилка завантаження моделі розпізнавання. Перевірте наявність папки models або інтернет-з’єднання.';
+            retryCameraBtn.textContent = 'Спробувати ще раз';
+            retryCameraBtn.style.display = 'inline-block';
+            return false;
+        }
+
+        function getSmoothedDominantEmotion(expressions) {
+            expressionHistory.push(expressions);
+            if (expressionHistory.length > SMOOTHING_WINDOW) {
+                expressionHistory.shift();
+            }
+
+            const emotions = Object.keys(EMOTION_PHRASES);
+            let dominantEmotion = 'neutral';
+            let maxAverage = -1;
+
+            for (const emotion of emotions) {
+                let sum = 0;
+                for (const frame of expressionHistory) {
+                    sum += frame[emotion] || 0;
+                }
+                const avg = sum / expressionHistory.length;
+                if (avg > maxAverage) {
+                    maxAverage = avg;
+                    dominantEmotion = emotion;
+                }
+            }
+
+            return dominantEmotion;
+        }
+
+        function startEmotionDetectionLoop() {
+            if (detectionTimer) {
+                clearInterval(detectionTimer);
+            }
+
+            const detectorOptions = new faceapi.TinyFaceDetectorOptions({
+                inputSize: 224,
+                scoreThreshold: 0.45
+            });
+
+            lastFaceTimestamp = performance.now();
+
+            detectionTimer = setInterval(async () => {
+                if (videoEl.paused || videoEl.ended || videoEl.readyState < 2) {
+                    return;
+                }
+
+                try {
+                    const detection = await faceapi
+                        .detectSingleFace(videoEl, detectorOptions)
+                        .withFaceExpressions();
+
+                    const now = performance.now();
+
+                    if (detection && detection.expressions) {
+                        lastFaceTimestamp = now;
+                        const emotionKey = getSmoothedDominantEmotion(detection.expressions);
+                        const phrase = EMOTION_PHRASES[emotionKey] || EMOTION_PHRASES.neutral;
+                        setEmotionCaption(phrase);
+                    } else if (now - lastFaceTimestamp > NO_FACE_TIMEOUT_MS) {
+                        expressionHistory = [];
+                        setEmotionCaption(STATUS_MESSAGES.noFace);
+                    }
+                } catch (err) {
+                    console.error('Помилка під час аналізу кадру:', err);
+                }
+            }, DETECTION_INTERVAL_MS);
+        }
+
+        async function startCameraSession() {
+            retryCameraBtn.style.display = 'none';
+            permissionCardEl.classList.remove('is-hidden');
+
+            if (!modelsReady) {
+                statusTextEl.textContent = STATUS_MESSAGES.loadingModels;
+                setEmotionCaption(STATUS_MESSAGES.loadingModels);
+                const loaded = await loadEmotionModels();
+                if (!loaded) return;
+            }
+
+            statusTextEl.textContent = STATUS_MESSAGES.requestingCamera;
+
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Браузер не підтримує getUserMedia.');
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false
+                });
+
+                videoEl.srcObject = stream;
+
+                videoEl.onloadedmetadata = () => {
+                    videoEl.play();
+                    videoEl.classList.add('is-ready');
+                    permissionCardEl.classList.add('is-hidden');
+                    setEmotionCaption(STATUS_MESSAGES.noFace);
+                    startEmotionDetectionLoop();
+                };
+            } catch (error) {
+                console.warn('Не вдалося отримати доступ до веб-камери:', error);
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    statusTextEl.textContent = 'Доступ до камери заблоковано. Дозвольте використання камери в налаштуваннях браузера.';
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    statusTextEl.textContent = 'Веб-камеру не знайдено на вашому пристрої.';
+                } else {
+                    statusTextEl.textContent = 'Натисніть кнопку нижче, щоб надати доступ до камери.';
+                }
+                retryCameraBtn.textContent = 'Увімкнути камеру';
+                retryCameraBtn.style.display = 'inline-block';
+            }
+        }
+
+        retryCameraBtn.addEventListener('click', () => {
+            startCameraSession();
+        });
+
+        backButton.addEventListener('click', (e) => {
+            if (window.history.length > 1) {
+                e.preventDefault();
+                window.history.back();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            startCameraSession();
+        });
+    </script>
+</body>
+</html>
