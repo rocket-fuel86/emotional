@@ -2,8 +2,8 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Розпізнавання емоцій</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Емоційний Інтелект — Розпізнавання емоцій</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,23 +34,25 @@
         }
 
         html, body {
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            overscroll-behavior: none;
             background-color: #1c1c1c;
             color: #ffffff;
             font-family: 'Inter', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
 
         .fullscreen-stage {
             position: relative;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
+            width: 100%;
+            height: 100%;
             background-color: #1c1c1c;
             overflow: hidden;
         }
@@ -71,10 +73,12 @@
         }
 
         .liquid-glass {
-            -webkit-backdrop-filter: blur(12px) saturate(160%);
-            backdrop-filter: blur(12px) saturate(160%);
-            background-color: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(22px) saturate(180%) brightness(1.06);
+            backdrop-filter: blur(22px) saturate(180%) brightness(1.06);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            overflow: hidden;
         }
 
         .liquid-glass::after {
@@ -98,14 +102,14 @@
 
         .back-pill {
             position: fixed;
-            top: 24px;
-            left: 20px;
+            top: calc(16px + env(safe-area-inset-top, 0px));
+            left: calc(16px + env(safe-area-inset-left, 0px));
             z-index: 20;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
+            width: 46px;
+            height: 46px;
             padding: 0;
             border-radius: 9999px;
             color: #ffffff;
@@ -121,19 +125,25 @@
                 box-shadow 0.25s ease;
         }
 
-        .back-pill:hover {
-            transform: translateY(-2px);
-            background-color: rgba(255, 255, 255, 0.14);
-            border-color: rgba(255, 255, 255, 0.62);
-            box-shadow:
-                0 18px 42px rgba(0, 0, 0, 0.45),
-                0 0 22px rgba(255, 255, 255, 0.16),
-                inset 0 1.5px 1.5px rgba(255, 255, 255, 0.85),
-                inset 0 -1.5px 2px rgba(255, 255, 255, 0.22);
+        @media (hover: hover) {
+            .back-pill:hover {
+                transform: translateY(-2px);
+                background-color: rgba(255, 255, 255, 0.14);
+                border-color: rgba(255, 255, 255, 0.62);
+                box-shadow:
+                    0 18px 42px rgba(0, 0, 0, 0.45),
+                    0 0 22px rgba(255, 255, 255, 0.16),
+                    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.85),
+                    inset 0 -1.5px 2px rgba(255, 255, 255, 0.22);
+            }
+
+            .back-pill:hover svg {
+                transform: translateX(-3px);
+            }
         }
 
         .back-pill:active {
-            transform: translateY(0) scale(0.96);
+            transform: scale(0.95);
         }
 
         .back-pill svg {
@@ -144,10 +154,6 @@
             flex-shrink: 0;
             filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
             transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .back-pill:hover svg {
-            transform: translateX(-3px);
         }
 
         .back-pill-label {
@@ -176,19 +182,19 @@
 
         .emotion-capsule {
             position: fixed;
-            bottom: 48px;
+            bottom: calc(24px + env(safe-area-inset-bottom, 0px));
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
-            width: min(88vw, 350px);
-            padding: 16px 24px;
-            border-radius: 28px;
+            width: calc(100% - 32px);
+            max-width: 380px;
+            padding: 15px 20px;
+            border-radius: 26px;
             text-align: center;
             pointer-events: none;
             transition:
                 opacity 0.26s ease,
-                transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-                width 0.3s ease;
+                transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .emotion-capsule.is-updating {
@@ -202,10 +208,12 @@
             display: block;
             color: #ffffff;
             font-family: 'Montserrat', 'Inter', sans-serif;
-            font-size: clamp(1.25rem, 2.4vw, 2.1rem);
+            font-size: clamp(1.05rem, 4.4vw, 1.35rem);
             font-weight: 700;
-            line-height: 1.28;
+            line-height: 1.3;
             letter-spacing: -0.015em;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
         }
 
@@ -219,6 +227,7 @@
             }
 
             .emotion-text {
+                font-size: clamp(1.35rem, 2.2vw, 2.05rem);
                 white-space: nowrap;
                 line-height: 1.22;
             }
@@ -230,14 +239,15 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 25;
-            width: min(88vw, 410px);
-            padding: 26px 28px;
-            border-radius: 28px;
+            width: calc(100% - 32px);
+            max-width: 400px;
+            padding: 24px 22px;
+            border-radius: 26px;
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 18px;
+            gap: 16px;
             transition: opacity 0.32s ease, transform 0.32s ease;
         }
 
@@ -251,7 +261,7 @@
             position: relative;
             z-index: 3;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
             line-height: 1.45;
             text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
@@ -261,7 +271,7 @@
             position: relative;
             z-index: 3;
             display: none;
-            padding: 12px 26px;
+            padding: 12px 24px;
             border-radius: 9999px;
             border: 1px solid rgba(255, 255, 255, 0.42);
             background: rgba(255, 255, 255, 0.18);
@@ -280,18 +290,41 @@
                 box-shadow 0.22s ease;
         }
 
-        .glass-action-btn:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.28);
-            border-color: rgba(255, 255, 255, 0.72);
-            box-shadow:
-                0 10px 24px rgba(0, 0, 0, 0.32),
-                0 0 18px rgba(255, 255, 255, 0.18),
-                inset 0 1px 1px rgba(255, 255, 255, 0.85);
+        @media (hover: hover) {
+            .glass-action-btn:hover {
+                transform: translateY(-2px);
+                background: rgba(255, 255, 255, 0.28);
+                border-color: rgba(255, 255, 255, 0.72);
+                box-shadow:
+                    0 10px 24px rgba(0, 0, 0, 0.32),
+                    0 0 18px rgba(255, 255, 255, 0.18),
+                    inset 0 1px 1px rgba(255, 255, 255, 0.85);
+            }
         }
 
         .glass-action-btn:active {
-            transform: translateY(0) scale(0.97);
+            transform: scale(0.97);
+        }
+
+        /* Адаптация под горизонтальную ориентацию телефона */
+        @media (max-height: 480px) and (orientation: landscape) {
+            .back-pill {
+                top: 12px;
+                left: calc(14px + env(safe-area-inset-left, 0px));
+                width: 40px;
+                height: 40px;
+            }
+
+            .emotion-capsule {
+                bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+                max-width: 75vw;
+                padding: 10px 22px;
+                border-radius: 9999px;
+            }
+
+            .emotion-text {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -349,7 +382,7 @@
         const backButton = document.getElementById('backButton');
 
         const SMOOTHING_WINDOW = 6;
-        const DETECTION_INTERVAL_MS = 150;
+        const DETECTION_INTERVAL_MS = 180;
         const NO_FACE_TIMEOUT_MS = 1200;
 
         let modelsReady = false;
@@ -430,7 +463,7 @@
             }
 
             const detectorOptions = new faceapi.TinyFaceDetectorOptions({
-                inputSize: 224,
+                inputSize: 160,
                 scoreThreshold: 0.45
             });
 
@@ -484,8 +517,8 @@
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: 'user',
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
                     },
                     audio: false
                 });
