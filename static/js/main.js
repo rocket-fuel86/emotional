@@ -10,12 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
             default: 'Емоційний інтелект',
             webcam: 'СКАНЕР ЕМОЦІЙ',
             sectors: { '1': 'ЕМОЦІЇ', '2': 'САМОКОНТРОЛЬ', '3': 'ЕМПАТІЯ' },
+            bgWords: {
+                '1': ['РАДІСТЬ', 'СМУТОК', 'ГНІВ', 'СТРАХ'],
+                '2': ['ДИСЦИПЛІНА', 'ТЕРПІННЯ', 'КОНТРОЛЬ', 'РІШЕННЯ'],
+                '3': ['РОЗУМІННЯ', 'ПІДТРИМКА', 'ТУРБОТА', 'СПІВЧУТТЯ']
+            },
             btnLabel: 'EN'
         },
         en: {
             default: 'Emotional intelligence',
             webcam: 'EMOTION SCANNER',
             sectors: { '1': 'EMOTIONS', '2': 'SELF-CONTROL', '3': 'EMPATHY' },
+            bgWords: {
+                '1': ['JOY', 'SADNESS', 'ANGER', 'FEAR'],
+                '2': ['DISCIPLINE', 'PATIENCE', 'CONTROL', 'DECISION'],
+                '3': ['UNDERSTANDING', 'SUPPORT', 'CARE', 'COMPASSION']
+            },
             btnLabel: 'UA'
         }
     };
