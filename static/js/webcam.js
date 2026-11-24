@@ -15,7 +15,7 @@ const STATUS_MESSAGES = {
 };
 
 const MODEL_SOURCES = [
-    './models',
+    './static/models',
     // 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/',
     // 'https://justadudewhohacks.github.io/face-api.js/models'
 ];
